@@ -1,0 +1,32 @@
+{
+  "name": "minimal-emr-demo",
+  "version": "1.0.0",
+  "description": "Full-stack minimal EMR demo with Express, Supabase PostgreSQL, MongoDB modeling, and a modern frontend.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "emr",
+    "postgresql",
+    "supabase",
+    "mongodb",
+    "express",
+    "healthcare"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "nodemon": "^3.1.10"
+  }
+}
