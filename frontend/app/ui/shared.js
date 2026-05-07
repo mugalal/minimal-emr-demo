@@ -89,7 +89,6 @@ export function renderSidebarPatientSummary(chart, onCreateMode = false) {
     `
       <div class="sidebar-summary-card">
         <div>
-          <p class="eyebrow">Active Chart</p>
           <h3>${escapeHtml(patient.fullName)}</h3>
           <p class="muted">${escapeHtml(patient.mrn)} · ${escapeHtml(patient.location)}</p>
         </div>
@@ -130,15 +129,11 @@ export function renderSidebarSystemSummary(health) {
           <span class="mini-chip status-${health.status === "ok" ? "success" : "warn"}">${escapeHtml(health.status)}</span>
         </div>
         <div class="system-row">
-          <span>PostgreSQL</span>
-          <span>${health.dataSources.postgres.configured ? `Configured via ${escapeHtml(health.dataSources.postgres.runtimeKey)}` : "Missing configuration"}</span>
+          <span>Database</span>
+          <span class="mini-chip status-${health.dataSources.postgres.configured ? "success" : "warn"}">${health.dataSources.postgres.configured ? "Connected" : "Not configured"}</span>
         </div>
         <div class="system-row">
-          <span>MongoDB</span>
-          <span>${health.dataSources.mongo.configured ? "Atlas URI present" : "Companion model only"}</span>
-        </div>
-        <div class="system-row">
-          <span>Checked</span>
+          <span>Last checked</span>
           <span>${formatDateTime(health.checkedAt)}</span>
         </div>
       </div>
@@ -158,7 +153,6 @@ export function renderPatientHero(chart) {
     <section class="panel hero-card">
       <div class="hero-layout">
         <div>
-          <p class="eyebrow">Active Chart</p>
           <h2>${escapeHtml(patient.fullName)}</h2>
           <p class="body-copy">${escapeHtml(patient.location)} · ${escapeHtml(patient.sex)} · Age ${escapeHtml(String(patient.age))}</p>
           <div class="chip-row">
@@ -202,10 +196,7 @@ export function renderPatientHero(chart) {
 export function section(title, body) {
   return `
     <div class="section-head">
-      <div>
-        <p class="eyebrow">Workspace Section</p>
-        <h2>${escapeHtml(title)}</h2>
-      </div>
+      <h2>${escapeHtml(title)}</h2>
     </div>
     ${body}
   `;
@@ -214,7 +205,6 @@ export function section(title, body) {
 export function pageHeader(title, description) {
   return `
     <header class="page-header">
-      <p class="eyebrow">Workspace Page</p>
       <h2>${escapeHtml(title)}</h2>
       <p class="muted">${escapeHtml(description)}</p>
     </header>

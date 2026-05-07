@@ -88,7 +88,7 @@ function renderOrgSchedule(state) {
 export function renderSchedulingPage(state) {
   return `
     <div class="page-layout">
-      ${pageHeader("Scheduling", "Coordinate patient visits, maintain the selected patient schedule, and review upcoming appointments across the workspace.")}
+      ${pageHeader("Scheduling", "Manage appointments for the selected patient and view upcoming visits across all patients.")}
       ${renderPatientHero(state.selectedChart)}
       ${renderAppointmentForm(state)}
       ${renderOrgSchedule(state)}

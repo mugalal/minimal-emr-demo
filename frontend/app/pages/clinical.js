@@ -66,7 +66,6 @@ function renderMedicationManager(chart, form) {
         `
           <div class="manager-layout">
             <div class="form-shell">
-              <p class="muted panel-note">Medications are attached to an existing encounter in the active chart.</p>
               <form class="stack" data-form="medication">
                 <div class="form-grid">
                   <label class="field"><span class="subheading">Encounter</span><select name="encounterId" required>${chart.encounters.map((encounter) => `<option value="${encounter.id}" ${encounter.id === form.encounterId ? "selected" : ""}>${formatDateTime(encounter.encounterDate)} · ${escapeHtml(encounter.encounterType.replaceAll("_", " "))}</option>`).join("")}</select></label>
@@ -172,7 +171,6 @@ function renderEncounterManager(chart, form) {
         `
           <div class="page-layout">
             <div class="form-shell">
-              <p class="muted panel-note">Create a basic encounter with note text, an optional primary diagnosis, and an optional vital-sign snapshot.</p>
               <form class="stack" data-form="encounter">
                 <div class="form-grid">
                   <label class="field"><span class="subheading">Doctor</span><select name="doctorId" required>${chart.doctorDirectory.map((doctor) => `<option value="${doctor.id}" ${doctor.id === form.doctorId ? "selected" : ""}>${escapeHtml(doctor.fullName)} · ${escapeHtml(doctor.specialty)}</option>`).join("")}</select></label>
@@ -252,7 +250,7 @@ export function renderClinicalPage(state) {
 
   return `
     <div class="page-layout">
-      ${pageHeader("Clinical", "Manage chart-level clinical data, including allergies, medications, labs, and encounter documentation.")}
+      ${pageHeader("Clinical", "Allergies, medications, labs, and encounter documentation for the selected patient.")}
       ${renderPatientHero(chart)}
       <div class="page-grid">
         ${renderAllergyManager(chart, state.forms.allergy)}

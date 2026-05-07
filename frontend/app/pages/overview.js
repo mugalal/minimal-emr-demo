@@ -54,7 +54,7 @@ export function renderOverviewPage(state) {
 
   return `
     <div class="page-layout">
-      ${pageHeader("Overview", "High-level operational view of the runtime application and the currently selected patient chart.")}
+      ${pageHeader("Overview", "High-level view of the current workspace.")}
       ${renderPatientHero(chart)}
       <div class="overview-grid">
         <section class="panel span-2">
@@ -64,13 +64,11 @@ export function renderOverviewPage(state) {
               ? `
                 <div class="page-two-col">
                   <div class="form-shell">
-                    <p class="eyebrow">Clinical Narrative</p>
                     <h3>${escapeHtml(chart.story.title)}</h3>
                     <p class="body-copy">${escapeHtml(chart.story.summary)}</p>
                     <p class="muted">${escapeHtml(chart.story.whyItMatters)}</p>
                   </div>
                   <div class="form-shell">
-                    <p class="eyebrow">Case Focus Areas</p>
                     <div class="chip-row">
                       ${chart.story.focusAreas.map((focus) => `<span class="mini-chip">${escapeHtml(focus)}</span>`).join("")}
                     </div>
@@ -90,10 +88,7 @@ export function renderOverviewPage(state) {
         </section>
 
         <section class="panel span-2">
-          ${section(
-            "Scheduling Outlook",
-            `<div class="page-two-col"><div class="entity-list">${scheduled}</div><div class="form-shell"><p class="eyebrow">Runtime Model</p><p class="body-copy">The browser application uses the Express API as its single runtime entry point. PostgreSQL serves live data, while MongoDB remains a parallel domain model and query artifact for the same EMR dataset.</p></div></div>`
-          )}
+          ${section("Scheduling Outlook", `<div class="entity-list">${scheduled}</div>`)}
         </section>
       </div>
     </div>

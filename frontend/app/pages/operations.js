@@ -82,7 +82,7 @@ export function renderOperationsPage(state) {
 
   return `
     <div class="page-layout">
-      ${pageHeader("Operations", "Monitor care coordination, open issues, and active chart alerts from one operational view.")}
+      ${pageHeader("Operations", "Care coordination, clinical alerts, and team overview for the selected patient.")}
       ${renderPatientHero(chart)}
       <div class="page-grid">
         <section class="panel">${section("Clinical Alerts", `<div class="entity-list">${alertsMarkup}</div>`)}</section>
