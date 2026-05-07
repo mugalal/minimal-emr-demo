@@ -4,13 +4,20 @@ import { fileURLToPath } from "node:url";
 
 import { config, getSupabaseRuntimeKey, isSupabaseConfigured } from "./config.js";
 import {
+  createAllergy,
   createAppointment,
+  createEncounter,
+  createMedication,
+  createPatient,
   getDashboardData,
   getHealthSnapshot,
   getPatientChart,
   listDoctors,
   listPatients,
+  updateAllergy,
   updateAppointment,
+  updateMedication,
+  updatePatient,
 } from "./emr-service.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -72,6 +79,20 @@ app.get(
   })
 );
 
+app.post(
+  "/api/patients",
+  asyncRoute(async (request, response) => {
+    response.status(201).json(await createPatient(request.body ?? {}));
+  })
+);
+
+app.patch(
+  "/api/patients/:patientId",
+  asyncRoute(async (request, response) => {
+    response.json(await updatePatient(request.params.patientId, request.body ?? {}));
+  })
+);
+
 app.get(
   "/api/doctors",
   asyncRoute(async (_request, response) => {
@@ -83,6 +104,41 @@ app.get(
   "/api/patients/:patientId/chart",
   asyncRoute(async (request, response) => {
     response.json(await getPatientChart(request.params.patientId));
+  })
+);
+
+app.post(
+  "/api/patients/:patientId/allergies",
+  asyncRoute(async (request, response) => {
+    response.status(201).json(await createAllergy(request.params.patientId, request.body ?? {}));
+  })
+);
+
+app.patch(
+  "/api/allergies/:allergyId",
+  asyncRoute(async (request, response) => {
+    response.json(await updateAllergy(request.params.allergyId, request.body ?? {}));
+  })
+);
+
+app.post(
+  "/api/patients/:patientId/encounters",
+  asyncRoute(async (request, response) => {
+    response.status(201).json(await createEncounter(request.params.patientId, request.body ?? {}));
+  })
+);
+
+app.post(
+  "/api/patients/:patientId/medications",
+  asyncRoute(async (request, response) => {
+    response.status(201).json(await createMedication(request.params.patientId, request.body ?? {}));
+  })
+);
+
+app.patch(
+  "/api/medications/:medicationId",
+  asyncRoute(async (request, response) => {
+    response.json(await updateMedication(request.params.medicationId, request.body ?? {}));
   })
 );
 

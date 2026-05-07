@@ -3,6 +3,12 @@ import { getSupabaseClient } from "./supabase.js";
 
 const ABNORMAL_FLAGS = ["abnormal", "low", "high", "critical"];
 const APPOINTMENT_STATUSES = ["scheduled", "checked_in", "completed", "cancelled", "no_show"];
+const ALLERGY_SEVERITIES = ["mild", "moderate", "severe"];
+const ALLERGY_STATUSES = ["active", "inactive", "entered_in_error"];
+const MEDICATION_STATUSES = ["active", "held", "stopped", "completed"];
+const ENCOUNTER_TYPES = ["office_visit", "follow_up", "annual_exam", "telehealth"];
+const ENCOUNTER_STATUSES = ["open", "signed", "amended"];
+const PATIENT_SEXES = ["female", "male", "other", "unknown"];
 const SYSTEM_USER_ID = "90000000-0000-4000-8000-000000000001";
 
 function createHttpError(message, statusCode) {
@@ -30,6 +36,57 @@ function formatLocation(city, state) {
 
 function formatDoctorName(doctor) {
   return `Dr. ${doctor.first_name} ${doctor.last_name}`;
+}
+
+function normalizeTrimmed(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeRequiredText(value, fieldName) {
+  const trimmed = normalizeTrimmed(value);
+
+  if (!trimmed) {
+    throw createHttpError(`${fieldName} is required.`, 400);
+  }
+
+  return trimmed;
+}
+
+function normalizeOptionalText(value) {
+  const trimmed = normalizeTrimmed(value);
+  return trimmed || null;
+}
+
+function normalizeEnum(value, fieldName, allowedValues) {
+  const trimmed = normalizeTrimmed(value);
+
+  if (!allowedValues.includes(trimmed)) {
+    throw createHttpError(`${fieldName} is invalid.`, 400);
+  }
+
+  return trimmed;
+}
+
+function normalizeDateInput(value, fieldName) {
+  if (!value) {
+    throw createHttpError(`${fieldName} is required.`, 400);
+  }
+
+  const normalized = new Date(value);
+
+  if (Number.isNaN(normalized.getTime())) {
+    throw createHttpError(`${fieldName} is invalid.`, 400);
+  }
+
+  return normalized.toISOString().slice(0, 10);
+}
+
+function normalizeNullableDateInput(value, fieldName) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  return normalizeDateInput(value, fieldName);
 }
 
 function normalizeReason(value, { required }) {
@@ -233,6 +290,36 @@ async function fetchCount(table, customize) {
   return count ?? 0;
 }
 
+async function generateNextMrn() {
+  const patients = await fetchRows("patients", "mrn");
+
+  const highest = patients.reduce((maxValue, patient) => {
+    const match = /^MRN-(\d+)$/.exec(patient.mrn ?? "");
+
+    if (!match) {
+      return maxValue;
+    }
+
+    return Math.max(maxValue, Number.parseInt(match[1], 10));
+  }, 0);
+
+  return `MRN-${String(highest + 1).padStart(6, "0")}`;
+}
+
+function hasAnyVitalsPayload(payload) {
+  return [
+    payload.heightCm,
+    payload.weightKg,
+    payload.bmi,
+    payload.systolicBp,
+    payload.diastolicBp,
+    payload.heartRate,
+    payload.respiratoryRate,
+    payload.temperatureC,
+    payload.oxygenSaturation,
+  ].some((value) => value !== undefined && value !== null && value !== "");
+}
+
 async function ensurePatient(patientId) {
   const patient = await fetchSingle(
     "patients",
@@ -269,6 +356,46 @@ async function ensureAppointment(appointmentId) {
   }
 
   return appointment;
+}
+
+async function ensureAllergy(allergyId) {
+  const allergy = await fetchSingle("allergies", "id, patient_id, allergen, reaction, severity, status, notes, recorded_at", (query) =>
+    query.eq("id", allergyId)
+  );
+
+  if (!allergy) {
+    throw createHttpError("Allergy not found.", 404);
+  }
+
+  return allergy;
+}
+
+async function ensureMedication(medicationId) {
+  const medication = await fetchSingle(
+    "medications",
+    "id, patient_id, encounter_id, medication_name, dose, route, frequency, start_date, end_date, status, instructions",
+    (query) => query.eq("id", medicationId)
+  );
+
+  if (!medication) {
+    throw createHttpError("Medication not found.", 404);
+  }
+
+  return medication;
+}
+
+async function ensureEncounter(encounterId) {
+  const encounter = await fetchSingle(
+    "encounters",
+    "id, patient_id, doctor_id, encounter_date, encounter_type, chief_complaint, assessment, plan, status",
+    (query) => query.eq("id", encounterId)
+  );
+
+  if (!encounter) {
+    throw createHttpError("Encounter not found.", 404);
+  }
+
+  return encounter;
 }
 
 async function writeAuditLog(entityName, entityId, action, details) {
@@ -401,6 +528,230 @@ function normalizeUpdateAppointmentPayload(payload, existingAppointment) {
   return {
     updatePayload,
     nextDoctorId,
+  };
+}
+
+function normalizeCreatePatientPayload(payload) {
+  return {
+    mrn: normalizeOptionalText(payload.mrn),
+    first_name: normalizeRequiredText(payload.firstName, "First name"),
+    last_name: normalizeRequiredText(payload.lastName, "Last name"),
+    date_of_birth: normalizeDateInput(payload.dateOfBirth, "Date of birth"),
+    sex: normalizeEnum(payload.sex, "Sex", PATIENT_SEXES),
+    phone: normalizeOptionalText(payload.phone),
+    email: normalizeOptionalText(payload.email),
+    address_line1: normalizeOptionalText(payload.addressLine1),
+    city: normalizeOptionalText(payload.city),
+    state: normalizeOptionalText(payload.state),
+    postal_code: normalizeOptionalText(payload.postalCode),
+  };
+}
+
+function normalizeUpdatePatientPayload(payload) {
+  const updatePayload = {};
+
+  if (payload.firstName !== undefined) {
+    updatePayload.first_name = normalizeRequiredText(payload.firstName, "First name");
+  }
+
+  if (payload.lastName !== undefined) {
+    updatePayload.last_name = normalizeRequiredText(payload.lastName, "Last name");
+  }
+
+  if (payload.dateOfBirth !== undefined) {
+    updatePayload.date_of_birth = normalizeDateInput(payload.dateOfBirth, "Date of birth");
+  }
+
+  if (payload.sex !== undefined) {
+    updatePayload.sex = normalizeEnum(payload.sex, "Sex", PATIENT_SEXES);
+  }
+
+  if (payload.phone !== undefined) {
+    updatePayload.phone = normalizeOptionalText(payload.phone);
+  }
+
+  if (payload.email !== undefined) {
+    updatePayload.email = normalizeOptionalText(payload.email);
+  }
+
+  if (payload.addressLine1 !== undefined) {
+    updatePayload.address_line1 = normalizeOptionalText(payload.addressLine1);
+  }
+
+  if (payload.city !== undefined) {
+    updatePayload.city = normalizeOptionalText(payload.city);
+  }
+
+  if (payload.state !== undefined) {
+    updatePayload.state = normalizeOptionalText(payload.state);
+  }
+
+  if (payload.postalCode !== undefined) {
+    updatePayload.postal_code = normalizeOptionalText(payload.postalCode);
+  }
+
+  if (!Object.keys(updatePayload).length) {
+    throw createHttpError("No patient changes were provided.", 400);
+  }
+
+  return updatePayload;
+}
+
+function normalizeCreateAllergyPayload(payload) {
+  return {
+    allergen: normalizeRequiredText(payload.allergen, "Allergen"),
+    reaction: normalizeOptionalText(payload.reaction),
+    severity: normalizeEnum(payload.severity, "Allergy severity", ALLERGY_SEVERITIES),
+    status: payload.status ? normalizeEnum(payload.status, "Allergy status", ALLERGY_STATUSES) : "active",
+    notes: normalizeOptionalText(payload.notes),
+  };
+}
+
+function normalizeUpdateAllergyPayload(payload) {
+  const updatePayload = {};
+
+  if (payload.allergen !== undefined) {
+    updatePayload.allergen = normalizeRequiredText(payload.allergen, "Allergen");
+  }
+
+  if (payload.reaction !== undefined) {
+    updatePayload.reaction = normalizeOptionalText(payload.reaction);
+  }
+
+  if (payload.severity !== undefined) {
+    updatePayload.severity = normalizeEnum(payload.severity, "Allergy severity", ALLERGY_SEVERITIES);
+  }
+
+  if (payload.status !== undefined) {
+    updatePayload.status = normalizeEnum(payload.status, "Allergy status", ALLERGY_STATUSES);
+  }
+
+  if (payload.notes !== undefined) {
+    updatePayload.notes = normalizeOptionalText(payload.notes);
+  }
+
+  if (!Object.keys(updatePayload).length) {
+    throw createHttpError("No allergy changes were provided.", 400);
+  }
+
+  return updatePayload;
+}
+
+function normalizeCreateMedicationPayload(payload) {
+  const encounterId = normalizeRequiredText(payload.encounterId, "Encounter");
+  const startDate = normalizeDateInput(payload.startDate, "Medication start date");
+  const endDate = normalizeNullableDateInput(payload.endDate, "Medication end date");
+
+  if (endDate && endDate < startDate) {
+    throw createHttpError("Medication end date must be on or after the start date.", 400);
+  }
+
+  return {
+    encounter_id: encounterId,
+    medication_name: normalizeRequiredText(payload.medicationName, "Medication name"),
+    dose: normalizeRequiredText(payload.dose, "Dose"),
+    route: normalizeRequiredText(payload.route, "Route"),
+    frequency: normalizeRequiredText(payload.frequency, "Frequency"),
+    start_date: startDate,
+    end_date: endDate,
+    status: payload.status ? normalizeEnum(payload.status, "Medication status", MEDICATION_STATUSES) : "active",
+    instructions: normalizeOptionalText(payload.instructions),
+  };
+}
+
+function normalizeUpdateMedicationPayload(payload, existingMedication) {
+  const updatePayload = {};
+  const startDate = payload.startDate !== undefined ? normalizeDateInput(payload.startDate, "Medication start date") : existingMedication.start_date;
+  let endDate = payload.endDate !== undefined ? normalizeNullableDateInput(payload.endDate, "Medication end date") : existingMedication.end_date;
+
+  if (payload.medicationName !== undefined) {
+    updatePayload.medication_name = normalizeRequiredText(payload.medicationName, "Medication name");
+  }
+
+  if (payload.dose !== undefined) {
+    updatePayload.dose = normalizeRequiredText(payload.dose, "Dose");
+  }
+
+  if (payload.route !== undefined) {
+    updatePayload.route = normalizeRequiredText(payload.route, "Route");
+  }
+
+  if (payload.frequency !== undefined) {
+    updatePayload.frequency = normalizeRequiredText(payload.frequency, "Frequency");
+  }
+
+  if (payload.startDate !== undefined) {
+    updatePayload.start_date = startDate;
+  }
+
+  if (payload.instructions !== undefined) {
+    updatePayload.instructions = normalizeOptionalText(payload.instructions);
+  }
+
+  if (payload.status !== undefined) {
+    const status = normalizeEnum(payload.status, "Medication status", MEDICATION_STATUSES);
+    updatePayload.status = status;
+
+    if ((status === "stopped" || status === "completed") && endDate === null) {
+      const today = new Date().toISOString().slice(0, 10);
+      endDate = today < startDate ? startDate : today;
+    }
+  }
+
+  if (payload.endDate !== undefined || updatePayload.status === "stopped" || updatePayload.status === "completed") {
+    updatePayload.end_date = endDate;
+  }
+
+  if (endDate && endDate < startDate) {
+    throw createHttpError("Medication end date must be on or after the start date.", 400);
+  }
+
+  if (!Object.keys(updatePayload).length) {
+    throw createHttpError("No medication changes were provided.", 400);
+  }
+
+  return updatePayload;
+}
+
+function normalizeCreateEncounterPayload(payload) {
+  const doctorId = normalizeRequiredText(payload.doctorId, "Doctor");
+  const encounterDate = normalizeDateTimeInput(payload.encounterDate, "Encounter date");
+  const encounterType = normalizeEnum(payload.encounterType, "Encounter type", ENCOUNTER_TYPES);
+  const status = payload.status ? normalizeEnum(payload.status, "Encounter status", ENCOUNTER_STATUSES) : "signed";
+
+  return {
+    encounter: {
+      doctor_id: doctorId,
+      encounter_date: encounterDate,
+      encounter_type: encounterType,
+      chief_complaint: normalizeOptionalText(payload.chiefComplaint),
+      assessment: normalizeOptionalText(payload.assessment),
+      plan: normalizeOptionalText(payload.plan),
+      status,
+    },
+    diagnosis:
+      payload.icd10Code || payload.diagnosisName
+        ? {
+            icd10_code: normalizeRequiredText(payload.icd10Code, "Diagnosis code"),
+            diagnosis_name: normalizeRequiredText(payload.diagnosisName, "Diagnosis name"),
+            is_primary: true,
+            status: payload.diagnosisStatus ? normalizeEnum(payload.diagnosisStatus, "Diagnosis status", ["active", "resolved"]) : "active",
+          }
+        : null,
+    vitals: hasAnyVitalsPayload(payload)
+      ? {
+          recorded_at: encounterDate,
+          height_cm: payload.heightCm === "" || payload.heightCm === undefined ? null : Number(payload.heightCm),
+          weight_kg: payload.weightKg === "" || payload.weightKg === undefined ? null : Number(payload.weightKg),
+          bmi: payload.bmi === "" || payload.bmi === undefined ? null : Number(payload.bmi),
+          systolic_bp: payload.systolicBp === "" || payload.systolicBp === undefined ? null : Number(payload.systolicBp),
+          diastolic_bp: payload.diastolicBp === "" || payload.diastolicBp === undefined ? null : Number(payload.diastolicBp),
+          heart_rate: payload.heartRate === "" || payload.heartRate === undefined ? null : Number(payload.heartRate),
+          respiratory_rate: payload.respiratoryRate === "" || payload.respiratoryRate === undefined ? null : Number(payload.respiratoryRate),
+          temperature_c: payload.temperatureC === "" || payload.temperatureC === undefined ? null : Number(payload.temperatureC),
+          oxygen_saturation: payload.oxygenSaturation === "" || payload.oxygenSaturation === undefined ? null : Number(payload.oxygenSaturation),
+        }
+      : null,
   };
 }
 
@@ -608,6 +959,7 @@ export async function getPatientChart(patientId) {
 
   const enrichedEncounters = encounters.map((encounter) => ({
     id: encounter.id,
+    doctorId: encounter.doctor_id,
     encounterDate: encounter.encounter_date,
     encounterType: encounter.encounter_type,
     chiefComplaint: encounter.chief_complaint,
@@ -673,6 +1025,7 @@ export async function getPatientChart(patientId) {
       firstName: patient.first_name,
       lastName: patient.last_name,
       fullName: `${patient.first_name} ${patient.last_name}`,
+      dateOfBirth: patient.date_of_birth,
       age: calculateAge(patient.date_of_birth),
       sex: patient.sex,
       email: patient.email,
@@ -693,7 +1046,16 @@ export async function getPatientChart(patientId) {
     },
     alerts,
     doctorDirectory: mapDoctorDirectory(doctors),
+    referenceData: {
+      patientSexes: PATIENT_SEXES,
+      allergySeverities: ALLERGY_SEVERITIES,
+      allergyStatuses: ALLERGY_STATUSES,
+      medicationStatuses: MEDICATION_STATUSES,
+      encounterTypes: ENCOUNTER_TYPES,
+      encounterStatuses: ENCOUNTER_STATUSES,
+    },
     allergies: allergies.map((allergy) => ({
+      id: allergy.id,
       allergen: allergy.allergen,
       reaction: allergy.reaction,
       severity: allergy.severity,
@@ -703,6 +1065,8 @@ export async function getPatientChart(patientId) {
     })),
     encounters: enrichedEncounters,
     medications: medications.map((medication) => ({
+      id: medication.id,
+      encounterId: medication.encounter_id,
       medicationName: medication.medication_name,
       dose: medication.dose,
       route: medication.route,
@@ -776,5 +1140,306 @@ export async function updateAppointment(appointmentId, payload) {
 
   return {
     appointment: mapAppointmentView(data, new Map([[doctor.id, doctor]])),
+  };
+}
+
+export async function createPatient(payload) {
+  const normalizedPayload = normalizeCreatePatientPayload(payload);
+  const client = getSupabaseClient();
+
+  const { data, error } = await client
+    .from("patients")
+    .insert({
+      ...normalizedPayload,
+      mrn: normalizedPayload.mrn ?? (await generateNextMrn()),
+    })
+    .select("id, mrn, first_name, last_name, date_of_birth, sex, phone, email, address_line1, city, state, postal_code")
+    .single();
+
+  if (error) {
+    error.statusCode = 500;
+    throw error;
+  }
+
+  await writeAuditLog("patients", data.id, "insert", {
+    mrn: data.mrn,
+    fullName: `${data.first_name} ${data.last_name}`,
+  });
+
+  return {
+    patient: {
+      id: data.id,
+      mrn: data.mrn,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      fullName: `${data.first_name} ${data.last_name}`,
+      dateOfBirth: data.date_of_birth,
+      sex: data.sex,
+      phone: data.phone,
+      email: data.email,
+      addressLine1: data.address_line1,
+      city: data.city,
+      state: data.state,
+      postalCode: data.postal_code,
+    },
+  };
+}
+
+export async function updatePatient(patientId, payload) {
+  await ensurePatient(patientId);
+  const updatePayload = normalizeUpdatePatientPayload(payload);
+  const client = getSupabaseClient();
+
+  const { data, error } = await client
+    .from("patients")
+    .update(updatePayload)
+    .eq("id", patientId)
+    .select("id, mrn, first_name, last_name, date_of_birth, sex, phone, email, address_line1, city, state, postal_code")
+    .single();
+
+  if (error) {
+    error.statusCode = 500;
+    throw error;
+  }
+
+  await writeAuditLog("patients", data.id, "update", {
+    fields: Object.keys(updatePayload),
+  });
+
+  return {
+    patient: {
+      id: data.id,
+      mrn: data.mrn,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      fullName: `${data.first_name} ${data.last_name}`,
+      dateOfBirth: data.date_of_birth,
+      sex: data.sex,
+      phone: data.phone,
+      email: data.email,
+      addressLine1: data.address_line1,
+      city: data.city,
+      state: data.state,
+      postalCode: data.postal_code,
+    },
+  };
+}
+
+export async function createAllergy(patientId, payload) {
+  await ensurePatient(patientId);
+  const normalizedPayload = normalizeCreateAllergyPayload(payload);
+  const client = getSupabaseClient();
+
+  const { data, error } = await client
+    .from("allergies")
+    .insert({
+      patient_id: patientId,
+      ...normalizedPayload,
+    })
+    .select("id, patient_id, allergen, reaction, severity, status, notes, recorded_at")
+    .single();
+
+  if (error) {
+    error.statusCode = 500;
+    throw error;
+  }
+
+  await writeAuditLog("allergies", data.id, "insert", {
+    allergen: data.allergen,
+    severity: data.severity,
+    status: data.status,
+  });
+
+  return {
+    allergy: {
+      id: data.id,
+      allergen: data.allergen,
+      reaction: data.reaction,
+      severity: data.severity,
+      status: data.status,
+      notes: data.notes,
+      recordedAt: data.recorded_at,
+    },
+  };
+}
+
+export async function updateAllergy(allergyId, payload) {
+  await ensureAllergy(allergyId);
+  const updatePayload = normalizeUpdateAllergyPayload(payload);
+  const client = getSupabaseClient();
+
+  const { data, error } = await client
+    .from("allergies")
+    .update(updatePayload)
+    .eq("id", allergyId)
+    .select("id, patient_id, allergen, reaction, severity, status, notes, recorded_at")
+    .single();
+
+  if (error) {
+    error.statusCode = 500;
+    throw error;
+  }
+
+  await writeAuditLog("allergies", data.id, "update", {
+    fields: Object.keys(updatePayload),
+    status: data.status,
+  });
+
+  return {
+    allergy: {
+      id: data.id,
+      allergen: data.allergen,
+      reaction: data.reaction,
+      severity: data.severity,
+      status: data.status,
+      notes: data.notes,
+      recordedAt: data.recorded_at,
+    },
+  };
+}
+
+export async function createMedication(patientId, payload) {
+  await ensurePatient(patientId);
+  const normalizedPayload = normalizeCreateMedicationPayload(payload);
+  const encounter = await ensureEncounter(normalizedPayload.encounter_id);
+
+  if (encounter.patient_id !== patientId) {
+    throw createHttpError("Selected encounter does not belong to the patient.", 400);
+  }
+
+  const client = getSupabaseClient();
+  const { data, error } = await client
+    .from("medications")
+    .insert({
+      patient_id: patientId,
+      ...normalizedPayload,
+    })
+    .select("id, patient_id, encounter_id, medication_name, dose, route, frequency, start_date, end_date, status, instructions")
+    .single();
+
+  if (error) {
+    error.statusCode = 500;
+    throw error;
+  }
+
+  await writeAuditLog("medications", data.id, "insert", {
+    medicationName: data.medication_name,
+    status: data.status,
+  });
+
+  return {
+    medication: {
+      id: data.id,
+      encounterId: data.encounter_id,
+      medicationName: data.medication_name,
+      dose: data.dose,
+      route: data.route,
+      frequency: data.frequency,
+      startDate: data.start_date,
+      endDate: data.end_date,
+      status: data.status,
+      instructions: data.instructions,
+    },
+  };
+}
+
+export async function updateMedication(medicationId, payload) {
+  const existingMedication = await ensureMedication(medicationId);
+  const updatePayload = normalizeUpdateMedicationPayload(payload, existingMedication);
+  const client = getSupabaseClient();
+
+  const { data, error } = await client
+    .from("medications")
+    .update(updatePayload)
+    .eq("id", medicationId)
+    .select("id, patient_id, encounter_id, medication_name, dose, route, frequency, start_date, end_date, status, instructions")
+    .single();
+
+  if (error) {
+    error.statusCode = 500;
+    throw error;
+  }
+
+  await writeAuditLog("medications", data.id, "update", {
+    fields: Object.keys(updatePayload),
+    status: data.status,
+  });
+
+  return {
+    medication: {
+      id: data.id,
+      encounterId: data.encounter_id,
+      medicationName: data.medication_name,
+      dose: data.dose,
+      route: data.route,
+      frequency: data.frequency,
+      startDate: data.start_date,
+      endDate: data.end_date,
+      status: data.status,
+      instructions: data.instructions,
+    },
+  };
+}
+
+export async function createEncounter(patientId, payload) {
+  await ensurePatient(patientId);
+  const normalizedPayload = normalizeCreateEncounterPayload(payload);
+  await ensureDoctor(normalizedPayload.encounter.doctor_id);
+  const client = getSupabaseClient();
+
+  const { data: encounter, error: encounterError } = await client
+    .from("encounters")
+    .insert({
+      patient_id: patientId,
+      ...normalizedPayload.encounter,
+    })
+    .select("id, patient_id, doctor_id, encounter_date, encounter_type, chief_complaint, assessment, plan, status")
+    .single();
+
+  if (encounterError) {
+    encounterError.statusCode = 500;
+    throw encounterError;
+  }
+
+  if (normalizedPayload.diagnosis) {
+    const { error } = await client.from("diagnoses").insert({
+      encounter_id: encounter.id,
+      ...normalizedPayload.diagnosis,
+    });
+
+    if (error) {
+      error.statusCode = 500;
+      throw error;
+    }
+  }
+
+  if (normalizedPayload.vitals) {
+    const { error } = await client.from("vitals").insert({
+      encounter_id: encounter.id,
+      ...normalizedPayload.vitals,
+    });
+
+    if (error) {
+      error.statusCode = 500;
+      throw error;
+    }
+  }
+
+  await writeAuditLog("encounters", encounter.id, "insert", {
+    encounterType: encounter.encounter_type,
+    status: encounter.status,
+  });
+
+  return {
+    encounter: {
+      id: encounter.id,
+      doctorId: encounter.doctor_id,
+      encounterDate: encounter.encounter_date,
+      encounterType: encounter.encounter_type,
+      chiefComplaint: encounter.chief_complaint,
+      assessment: encounter.assessment,
+      plan: encounter.plan,
+      status: encounter.status,
+    },
   };
 }

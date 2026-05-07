@@ -47,6 +47,29 @@ Optional query string:
 
 - `search`: filters by patient name, MRN, location, and scenario text
 
+### `POST /api/patients`
+
+Creates a new patient record.
+
+Expected body:
+
+```json
+{
+  "firstName": "Sara",
+  "lastName": "Bennett",
+  "dateOfBirth": "1991-06-14",
+  "sex": "female",
+  "phone": "555-700-1001",
+  "email": "sara.bennett@example.com",
+  "city": "Austin",
+  "state": "TX"
+}
+```
+
+### `PATCH /api/patients/:patientId`
+
+Updates patient demographics and contact information.
+
 ### `GET /api/patients/:patientId/chart`
 
 Returns the full chart view for a single patient.
@@ -62,6 +85,33 @@ Includes:
 - medications
 - lab orders with results
 - appointments
+
+### `POST /api/patients/:patientId/allergies`
+
+Creates a new allergy record for a patient.
+
+### `PATCH /api/allergies/:allergyId`
+
+Updates an allergy record. The current UI uses this to mark allergies inactive instead of deleting them.
+
+### `POST /api/patients/:patientId/encounters`
+
+Creates an encounter note for a patient.
+
+The payload can include:
+
+- encounter metadata
+- note text
+- one primary diagnosis
+- an optional vital-sign snapshot
+
+### `POST /api/patients/:patientId/medications`
+
+Creates a medication tied to an existing encounter.
+
+### `PATCH /api/medications/:medicationId`
+
+Updates an existing medication. The current UI uses this to stop active medications.
 
 ### `POST /api/patients/:patientId/appointments`
 
@@ -98,4 +148,4 @@ Typical use cases:
 
 ## Design Choice
 
-The backend started as a read-only API on purpose. It now includes appointment editing as the first mutation workflow, which keeps the project more realistic while still avoiding a large amount of authentication and role-management complexity.
+The backend started as a read-only API and was expanded with a small set of write workflows that are realistic for a minimal EMR demo. The current implementation supports patient administration, appointment changes, allergy management, medication updates, and basic encounter creation without introducing full authentication and authorization complexity.
