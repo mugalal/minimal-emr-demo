@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Minimal EMR Platform</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-copy">
+          <p class="eyebrow">Full-Stack EMR Demo</p>
+          <h1>Clinical Operations Workspace</h1>
+          <p class="muted">Express API, Supabase PostgreSQL, and MongoDB design artifacts presented as one cohesive project.</p>
+        </div>
+
+        <div class="topbar-actions">
+          <button id="refresh-button" class="button secondary" type="button">Refresh Data</button>
+          <p id="status-pill" class="status-pill status-info">Initializing workspace...</p>
+        </div>
+      </header>
+
+      <section class="hero-strip">
+        <div class="panel hero-panel">
+          <div>
+            <p class="eyebrow">Runtime View</p>
+            <h2>Operational Snapshot</h2>
+            <p class="muted">The frontend now runs through a dedicated backend API rather than querying Supabase directly from the browser.</p>
+          </div>
+
+          <div id="metrics-grid" class="metrics-grid"></div>
+        </div>
+      </section>
+
+      <div class="layout">
+        <aside class="sidebar">
+          <section class="panel panel-tight">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Explorer</p>
+                <h2>Patient Directory</h2>
+              </div>
+              <span id="patient-count-badge" class="count-badge">0</span>
+            </div>
+
+            <label class="search-label" for="patient-search">Search by name, MRN, location, or scenario</label>
+            <input id="patient-search" class="search-input" type="search" placeholder="Elena, MRN-000001, chronic disease...">
+            <div id="patient-list" class="patient-list"></div>
+          </section>
+
+          <section id="story-brief" class="panel panel-tight"></section>
+          <section id="system-status" class="panel panel-tight"></section>
+        </aside>
+
+        <main class="main-content">
+          <section id="patient-hero" class="panel patient-hero"></section>
+
+          <div class="dashboard-grid">
+            <section id="alerts-panel" class="panel"></section>
+            <section id="operations-panel" class="panel"></section>
+            <section id="care-team-panel" class="panel"></section>
+            <section id="appointments-panel" class="panel"></section>
+            <section id="medications-panel" class="panel panel-wide"></section>
+            <section id="labs-panel" class="panel"></section>
+            <section id="timeline-panel" class="panel panel-tall"></section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
