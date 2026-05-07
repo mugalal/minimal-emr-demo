@@ -1,0 +1,352 @@
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.panel-tight {
+  padding: 18px;
+}
+
+.panel-soft {
+  background: var(--panel-soft);
+}
+
+.panel-highlight {
+  background: var(--panel-highlight);
+}
+
+.eyebrow,
+.subheading,
+.metric-label,
+.search-label,
+.tab-button,
+.helper-label {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.76rem;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--teal);
+}
+
+.muted,
+.body-copy,
+.entity-card p,
+.timeline-card p,
+.lab-card p,
+.table-row span,
+.system-pill span:last-child,
+.empty-state,
+.panel-note {
+  color: var(--muted);
+}
+
+.button {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  cursor: pointer;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button.secondary {
+  background: rgba(98, 215, 201, 0.12);
+  color: var(--text);
+  border: 1px solid rgba(98, 215, 201, 0.18);
+}
+
+.button.primary {
+  background: linear-gradient(135deg, rgba(98, 215, 201, 0.95), rgba(130, 169, 255, 0.92));
+  color: #041016;
+  font-weight: 700;
+}
+
+.button.danger {
+  background: rgba(255, 124, 124, 0.12);
+  color: var(--text);
+  border: 1px solid rgba(255, 124, 124, 0.22);
+}
+
+.status-pill,
+.mini-chip,
+.count-badge,
+.system-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+}
+
+.status-pill {
+  font-size: 0.92rem;
+}
+
+.status-info {
+  background: rgba(98, 215, 201, 0.12);
+  border-color: rgba(98, 215, 201, 0.18);
+}
+
+.status-success {
+  background: rgba(125, 227, 161, 0.12);
+  border-color: rgba(125, 227, 161, 0.18);
+}
+
+.status-warn {
+  background: rgba(255, 195, 111, 0.12);
+  border-color: rgba(255, 195, 111, 0.18);
+}
+
+.status-error,
+.status-danger {
+  background: rgba(255, 124, 124, 0.12);
+  border-color: rgba(255, 124, 124, 0.18);
+}
+
+.mini-chip,
+.count-badge,
+.system-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--line);
+  color: var(--text);
+  font-size: 0.83rem;
+}
+
+.metric-card,
+.hero-metric,
+.entity-card,
+.timeline-card,
+.lab-card,
+.table-row,
+.form-shell,
+.sidebar-card {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.metric-card,
+.hero-metric,
+.entity-card,
+.timeline-card,
+.lab-card,
+.table-row,
+.form-shell,
+.sidebar-card {
+  padding: 16px;
+}
+
+.metric-card strong,
+.hero-metric strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.85rem;
+}
+
+.metric-teal strong {
+  color: var(--teal);
+}
+
+.metric-blue strong {
+  color: var(--blue);
+}
+
+.metric-violet strong {
+  color: var(--violet);
+}
+
+.metric-amber strong {
+  color: var(--amber);
+}
+
+.metric-rose strong {
+  color: var(--rose);
+}
+
+.tab-nav {
+  grid-auto-flow: column;
+  justify-content: start;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.tab-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab-button.active {
+  background: rgba(98, 215, 201, 0.12);
+  border-color: rgba(98, 215, 201, 0.28);
+  color: var(--text);
+}
+
+.search-input,
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  color: var(--text);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.patient-card {
+  width: 100%;
+  border: 1px solid var(--line);
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--panel-soft);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.patient-card.active {
+  outline: 2px solid rgba(98, 215, 201, 0.45);
+  background: rgba(98, 215, 201, 0.08);
+}
+
+.patient-card-top,
+.patient-card-bottom,
+.timeline-top,
+.lab-top,
+.system-row,
+.table-head,
+.table-row,
+.entity-card-top {
+  display: grid;
+  gap: 12px;
+}
+
+.patient-card-top,
+.timeline-top,
+.lab-top,
+.system-row,
+.entity-card-top {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.patient-card p,
+.patient-card strong,
+.entity-card strong,
+.entity-card p,
+.timeline-card strong,
+.timeline-card p,
+.lab-card strong,
+.table-row strong,
+.table-row p,
+.lab-card p {
+  margin: 0;
+}
+
+.patient-story,
+.entity-note,
+.body-copy {
+  line-height: 1.5;
+}
+
+.table {
+  display: grid;
+  gap: 10px;
+}
+
+.table-head,
+.table-row {
+  grid-template-columns: 1.4fr 0.8fr 1fr 0.8fr;
+  align-items: start;
+}
+
+.table-head {
+  padding: 0 10px;
+}
+
+.table-row span {
+  display: block;
+  margin-top: 6px;
+}
+
+.timeline-card ul,
+.lab-card ul,
+.entity-card ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.timeline-card li,
+.lab-card li,
+.entity-card li {
+  margin-bottom: 8px;
+}
+
+.alert-danger {
+  border-color: rgba(255, 124, 124, 0.35);
+  background: rgba(255, 124, 124, 0.09);
+}
+
+.alert-warn {
+  border-color: rgba(255, 195, 111, 0.35);
+  background: rgba(255, 195, 111, 0.08);
+}
+
+.tone-blue {
+  border-color: rgba(130, 169, 255, 0.35);
+  background: rgba(130, 169, 255, 0.08);
+}
+
+.tone-rose {
+  border-color: rgba(255, 140, 148, 0.35);
+  background: rgba(255, 140, 148, 0.08);
+}
+
+.empty-state {
+  margin: 0;
+  padding: 8px 0;
+}
+
+.divider {
+  height: 1px;
+  background: var(--line);
+}
+
+@media (max-width: 760px) {
+  .tab-nav,
+  .table-head,
+  .table-row,
+  .patient-card-top,
+  .timeline-top,
+  .lab-top,
+  .system-row,
+  .entity-card-top {
+    grid-template-columns: 1fr;
+  }
+}

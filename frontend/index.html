@@ -4,15 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Minimal EMR Platform</title>
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./styles/main.css">
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
         <div class="brand-copy">
-          <p class="eyebrow">Full-Stack EMR Demo</p>
-          <h1>Clinical Operations Workspace</h1>
-          <p class="muted">Express API, Supabase PostgreSQL, and MongoDB design artifacts presented as one cohesive project.</p>
+          <p class="eyebrow">Clinical Platform</p>
+          <h1>Minimal EMR Workspace</h1>
+          <p class="muted">Patient administration, scheduling, chart review, and clinical workflows backed by an Express API and Supabase PostgreSQL.</p>
         </div>
 
         <div class="topbar-actions">
@@ -21,19 +21,16 @@
         </div>
       </header>
 
-      <section class="hero-strip">
-        <div class="panel hero-panel">
-          <div>
-            <p class="eyebrow">Runtime View</p>
-            <h2>Operational Snapshot</h2>
-            <p class="muted">The frontend now runs through a dedicated backend API rather than querying Supabase directly from the browser.</p>
-          </div>
-
-          <div id="metrics-grid" class="metrics-grid"></div>
+      <section class="metrics-strip panel">
+        <div class="section-copy">
+          <p class="eyebrow">System Snapshot</p>
+          <h2>Operational Overview</h2>
+          <p class="muted">The frontend is structured as a multi-page workspace and uses the backend API for all runtime data access.</p>
         </div>
+        <div id="metrics-grid" class="metrics-grid"></div>
       </section>
 
-      <div class="layout">
+      <div class="workspace-shell">
         <aside class="sidebar">
           <section class="panel panel-tight">
             <div class="section-head">
@@ -49,26 +46,17 @@
             <div id="patient-list" class="patient-list"></div>
           </section>
 
-          <section id="story-brief" class="panel panel-tight"></section>
-          <section id="system-status" class="panel panel-tight"></section>
+          <section id="sidebar-patient-summary" class="panel panel-tight"></section>
+          <section id="sidebar-system-summary" class="panel panel-tight"></section>
         </aside>
 
-        <main class="main-content">
-          <section id="patient-hero" class="panel patient-hero"></section>
-
-          <div class="dashboard-grid">
-            <section id="alerts-panel" class="panel"></section>
-            <section id="operations-panel" class="panel"></section>
-            <section id="care-team-panel" class="panel"></section>
-            <section id="appointments-panel" class="panel"></section>
-            <section id="medications-panel" class="panel panel-wide"></section>
-            <section id="labs-panel" class="panel"></section>
-            <section id="timeline-panel" class="panel panel-tall"></section>
-          </div>
+        <main class="main-shell">
+          <nav id="route-tabs" class="tab-nav" aria-label="Workspace sections"></nav>
+          <section id="page-content" class="page-content"></section>
         </main>
       </div>
     </div>
 
-    <script type="module" src="./app.js"></script>
+    <script type="module" src="./app/main.js"></script>
   </body>
 </html>

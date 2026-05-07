@@ -26,9 +26,13 @@ The project scope is intentionally limited to a minimal EMR feature set, but it 
 ## Current Capabilities
 
 - patient directory with search by name, MRN, location, and scenario text
+- patient administration workflow with create and edit support
 - patient chart view with demographics, allergies, medications, labs, appointments, care team, and encounter timeline
 - operational dashboard with top-level metrics, scheduled visits, and abnormal lab watchlist
 - appointment scheduling workflow with create, reschedule, and cancel actions
+- allergy workflow with add and inactive-state management
+- medication workflow with add and stop actions
+- encounter creation with optional diagnosis and vital-sign capture
 - backend aggregation layer that assembles chart data from multiple PostgreSQL tables
 - MongoDB setup, seed, and query scripts for the same EMR domain
 
@@ -68,8 +72,15 @@ Current HTTP endpoints:
 - `GET /api/health`
 - `GET /api/dashboard`
 - `GET /api/patients`
+- `POST /api/patients`
+- `PATCH /api/patients/:patientId`
 - `GET /api/doctors`
 - `GET /api/patients/:patientId/chart`
+- `POST /api/patients/:patientId/allergies`
+- `PATCH /api/allergies/:allergyId`
+- `POST /api/patients/:patientId/encounters`
+- `POST /api/patients/:patientId/medications`
+- `PATCH /api/medications/:medicationId`
 - `POST /api/patients/:patientId/appointments`
 - `PATCH /api/appointments/:appointmentId`
 
@@ -215,15 +226,17 @@ See `docs/domain-scenarios.md` for the full case descriptions.
 ## Current Limitations
 
 - authentication and role-based authorization are not implemented
-- appointment management is the first completed write workflow; broader CRUD is still in progress
+- current write workflows focus on patient administration, appointments, allergies, medications, and basic encounters
+- edit flows are not implemented for every entity yet, and deletion is generally modeled as status changes instead of destructive removal
 - MongoDB is documented and scripted, but it is not the live runtime store for the web app
 - this project models healthcare workflows, but it is not production-ready clinical software
 
 ## Roadmap
 
-- patient create and edit flows
-- allergy and medication editing workflows
-- encounter creation with diagnoses and vitals
+- diagnosis editing and encounter amendment flows
+- broader appointment and patient filtering views
+- medication edit and hold workflows
+- allergy edit and restoration workflows
 - broader audit coverage for write actions
 - automated tests for the API and frontend state handling
 - deployment configuration for a hosted demo
