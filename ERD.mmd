@@ -1,0 +1,145 @@
+erDiagram
+    PATIENTS {
+        uuid id PK
+        string mrn UK
+        string first_name
+        string last_name
+        date date_of_birth
+        string sex
+        string phone
+        string email
+    }
+
+    DOCTORS {
+        uuid id PK
+        string license_number UK
+        string first_name
+        string last_name
+        string specialty
+        string phone
+        string email
+    }
+
+    EMR_USERS {
+        uuid id PK
+        string username UK
+        string full_name
+        string role
+        string email UK
+        boolean is_active
+    }
+
+    APPOINTMENTS {
+        uuid id PK
+        uuid patient_id FK
+        uuid doctor_id FK
+        timestamptz scheduled_start
+        timestamptz scheduled_end
+        string status
+        string reason
+    }
+
+    ENCOUNTERS {
+        uuid id PK
+        uuid patient_id FK
+        uuid doctor_id FK
+        uuid appointment_id FK
+        timestamptz encounter_date
+        string encounter_type
+        string chief_complaint
+        string status
+    }
+
+    DIAGNOSES {
+        uuid id PK
+        uuid encounter_id FK
+        string icd10_code
+        string diagnosis_name
+        boolean is_primary
+        string status
+    }
+
+    MEDICATIONS {
+        uuid id PK
+        uuid patient_id FK
+        uuid encounter_id FK
+        string medication_name
+        string dose
+        string route
+        string frequency
+        date start_date
+        date end_date
+        string status
+    }
+
+    ALLERGIES {
+        uuid id PK
+        uuid patient_id FK
+        string allergen
+        string reaction
+        string severity
+        string status
+    }
+
+    VITALS {
+        uuid id PK
+        uuid encounter_id FK
+        timestamptz recorded_at
+        decimal height_cm
+        decimal weight_kg
+        decimal bmi
+        integer systolic_bp
+        integer diastolic_bp
+        integer heart_rate
+        decimal temperature_c
+        integer oxygen_saturation
+    }
+
+    LAB_ORDERS {
+        uuid id PK
+        uuid patient_id FK
+        uuid encounter_id FK
+        uuid ordering_doctor_id FK
+        string test_name
+        string loinc_code
+        string priority
+        string status
+        timestamptz ordered_at
+    }
+
+    LAB_RESULTS {
+        uuid id PK
+        uuid lab_order_id FK
+        string result_name
+        string result_value
+        string unit
+        string reference_range
+        string abnormal_flag
+        timestamptz resulted_at
+    }
+
+    AUDIT_LOGS {
+        uuid id PK
+        uuid user_id FK
+        string entity_name
+        uuid entity_id
+        string action
+        timestamptz action_timestamp
+        jsonb details
+    }
+
+    PATIENTS ||--o{ APPOINTMENTS : books
+    DOCTORS ||--o{ APPOINTMENTS : receives
+    PATIENTS ||--o{ ENCOUNTERS : has
+    DOCTORS ||--o{ ENCOUNTERS : documents
+    APPOINTMENTS o|--|| ENCOUNTERS : becomes
+    ENCOUNTERS ||--o{ DIAGNOSES : contains
+    PATIENTS ||--o{ MEDICATIONS : receives
+    ENCOUNTERS ||--o{ MEDICATIONS : starts
+    PATIENTS ||--o{ ALLERGIES : records
+    ENCOUNTERS ||--o| VITALS : captures
+    PATIENTS ||--o{ LAB_ORDERS : receives
+    DOCTORS ||--o{ LAB_ORDERS : orders
+    ENCOUNTERS ||--o{ LAB_ORDERS : generates
+    LAB_ORDERS ||--o{ LAB_RESULTS : returns
+    EMR_USERS ||--o{ AUDIT_LOGS : creates
