@@ -2,10 +2,9 @@
 
 A full-stack electronic medical records demo — Express REST API, Supabase (PostgreSQL) backend, and a modular vanilla-JS frontend.
 
-[![CI](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml)
-[![Docker](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/cd.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/cd.yml)
+[![CI](https://github.com/mugalal/minimal-emr-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/mugalal/minimal-emr-demo/actions/workflows/ci.yml)
+[![Docker](https://github.com/mugalal/minimal-emr-demo/actions/workflows/cd.yml/badge.svg)](https://github.com/mugalal/minimal-emr-demo/actions/workflows/cd.yml)
 
-> Replace `YOUR_USERNAME/YOUR_REPO` with your actual GitHub repo path.
 
 ---
 
@@ -50,7 +49,7 @@ The frontend is served as static files by the same Express process — no separa
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+git clone https://github.com/mugalal/minimal-emr-demo.git
 cd minimal-emr-demo
 npm ci
 ```
@@ -125,7 +124,7 @@ Docker images are tagged as `main`, `sha-<short>`, and `v<semver>` on tagged rel
 
 ```bash
 # Pull the latest image built by CD
-docker pull ghcr.io/YOUR_USERNAME/YOUR_REPO:main
+docker pull ghcr.io/mugalal/minimal-emr-demo:main
 
 # Run it
 docker run -d \
@@ -134,7 +133,7 @@ docker run -d \
   -e SUPABASE_URL=... \
   -e SUPABASE_SERVICE_ROLE_KEY=... \
   --restart unless-stopped \
-  ghcr.io/YOUR_USERNAME/YOUR_REPO:main
+  ghcr.io/mugalal/minimal-emr-demo:main
 ```
 
 ---
