@@ -1,255 +1,182 @@
-# Minimal EMR Demo
+# Minimal EMR Platform
 
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)
-![Express](https://img.shields.io/badge/Backend-Express-111827?logo=express&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
-![Vanilla JS](https://img.shields.io/badge/Frontend-Vanilla_JS-F7DF1E?logo=javascript&logoColor=black)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+A full-stack electronic medical records demo — Express REST API, Supabase (PostgreSQL) backend, and a modular vanilla-JS frontend.
 
-Minimal EMR Demo is a full-stack clinical workspace built on Express and Supabase/PostgreSQL, with a companion MongoDB model for the same healthcare domain. The current implementation supports patient chart review, operational dashboards, and appointment management through a browser-based interface backed by a server-side API.
+[![CI](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml)
+[![Docker](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/cd.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/cd.yml)
 
-## Overview
+> Replace `YOUR_USERNAME/YOUR_REPO` with your actual GitHub repo path.
 
-This repository contains three related parts:
+---
 
-- a running web application for chart review and scheduling workflows
-- a normalized PostgreSQL schema used as the live application data source
-- a MongoDB document model and query set that represent the same EMR domain in a NoSQL form
+## Features
 
-The project scope is intentionally limited to a minimal EMR feature set, but it includes enough structure to show how patient, appointment, encounter, medication, allergy, lab, user, and audit data fit together.
+- Patient administration — create, search, and update demographics
+- Scheduling — create and manage appointments per patient
+- Clinical chart — allergies, medications, encounters, labs, and vitals
+- Operations view — care team, clinical alerts, and abnormal lab watchlist
+- Structured JSON logging (NDJSON in production, colourised in dev)
+- Enhanced `/api/health` with uptime, memory, and data-source status
+- Production security headers (CSP, HSTS-ready, X-Frame-Options, etc.)
+- In-process rate limiting with automatic store pruning
+- UUID path-parameter validation on all routes
+- Graceful SIGTERM/SIGINT shutdown
 
-## ERD
-
-![Minimal EMR ERD](ERD.svg)
-
-## Current Capabilities
-
-- patient directory with search by name, MRN, location, and scenario text
-- patient administration workflow with create and edit support
-- patient chart view with demographics, allergies, medications, labs, appointments, care team, and encounter timeline
-- operational dashboard with top-level metrics, scheduled visits, and abnormal lab watchlist
-- appointment scheduling workflow with create, reschedule, and cancel actions
-- allergy workflow with add and inactive-state management
-- medication workflow with add and stop actions
-- encounter creation with optional diagnosis and vital-sign capture
-- backend aggregation layer that assembles chart data from multiple PostgreSQL tables
-- MongoDB setup, seed, and query scripts for the same EMR domain
+---
 
 ## Architecture
 
-### Runtime Application Path
-
-```text
-Browser frontend
-    |
-    v
-Express API
-    |
-    v
-Supabase / PostgreSQL
+```
+Browser (Vanilla JS SPA)
+        │  HTTP
+        ▼
+Express Server  ──► /api/health, /api/dashboard, /api/patients, …
+        │
+        ▼
+Supabase (PostgreSQL)
 ```
 
-### Companion Modeling Path
+The frontend is served as static files by the same Express process — no separate web server needed.
 
-```text
-MongoDB Atlas
-  |- collection validators and indexes
-  |- seed documents
-  `- query and aggregation scripts
-```
+---
 
-### Main Design Choice
+## Quick Start
 
-PostgreSQL is the runtime source for the application because the current app needs structured joins and predictable relational data access. MongoDB is included as a parallel design and query implementation for the same domain so the repository documents both normalized and document-oriented approaches.
+### Prerequisites
 
-More detail is available in `docs/architecture.md` and `docs/sql-vs-mongo.md`.
+- Node.js 20+
+- A free [Supabase](https://supabase.com) project
 
-## API Summary
-
-Current HTTP endpoints:
-
-- `GET /api/health`
-- `GET /api/dashboard`
-- `GET /api/patients`
-- `POST /api/patients`
-- `PATCH /api/patients/:patientId`
-- `GET /api/doctors`
-- `GET /api/patients/:patientId/chart`
-- `POST /api/patients/:patientId/allergies`
-- `PATCH /api/allergies/:allergyId`
-- `POST /api/patients/:patientId/encounters`
-- `POST /api/patients/:patientId/medications`
-- `PATCH /api/medications/:medicationId`
-- `POST /api/patients/:patientId/appointments`
-- `PATCH /api/appointments/:appointmentId`
-
-See `docs/api.md` for request and response details.
-
-## Data Model
-
-### PostgreSQL
-
-The relational model includes:
-
-- `patients`
-- `doctors`
-- `appointments`
-- `encounters`
-- `diagnoses`
-- `medications`
-- `allergies`
-- `vitals`
-- `lab_orders`
-- `lab_results`
-- `emr_users`
-- `audit_logs`
-
-### MongoDB
-
-The document model includes:
-
-- `patients`
-- `doctors`
-- `users`
-- `appointments`
-- `encounters`
-- `lab_orders`
-- `audit_logs`
-
-In the MongoDB version, allergies are embedded under patients, diagnoses/vitals/medications are embedded under encounters, and lab results are embedded under lab orders.
-
-## Local Development
-
-### Install Dependencies
+### 1. Clone and install
 
 ```bash
-npm install
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+cd minimal-emr-demo
+npm ci
 ```
 
-### Environment Variables
-
-Copy `.env.example` to `.env` and provide the required values.
-
-```env
-PORT=3000
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=
-MONGODB_ATLAS_URI=
-```
-
-Notes:
-
-- the anon key is enough for read-only runtime access if the schema grants public reads
-- the service role key is required for write workflows such as appointment creation and updates
-- `.env` is intentionally ignored by git
-
-### Run the Application
+### 2. Configure environment
 
 ```bash
+cp .env.example .env
+# Edit .env and fill in SUPABASE_URL and SUPABASE_ANON_KEY (or SUPABASE_SERVICE_ROLE_KEY)
+```
+
+### 3. Run in development
+
+```bash
+make dev          # auto-reloads on file changes
+# OR
 npm run dev
 ```
 
-Then open:
+Open [http://localhost:3000](http://localhost:3000).
 
-```text
-http://localhost:3000
+---
+
+## Running with Docker
+
+```bash
+# Build the image
+make docker-build
+
+# Run with your .env file
+make docker-run
+
+# Or use docker compose (recommended for local dev)
+make docker-compose-up
 ```
 
-If another process already uses that port, change `PORT` in `.env`.
+---
 
-## Database Assets
+## Testing
 
-### Supabase / PostgreSQL
-
-Run these files in the Supabase SQL editor:
-
-1. `postgres_schema.sql`
-2. `postgres_seed.sql`
-3. `postgres_queries.sql`
-
-### MongoDB / Atlas
-
-Run these files with `mongosh`:
-
-1. `mongo_setup.js`
-2. `mongo_seed.js`
-3. `mongo_queries.js`
-
-## Seeded Scenarios
-
-The demo dataset is organized around three patient cases:
-
-- Elena Garcia: acute infection visit, severe penicillin allergy, antibiotic treatment, CBC review, scheduled follow-up
-- Michael Johnson: hypertension and type 2 diabetes follow-up with active medications and elevated HbA1c
-- Priya Nair: preventive wellness visit with elevated LDL on lipid screening
-
-See `docs/domain-scenarios.md` for the full case descriptions.
-
-## Project Structure
-
-```text
-.
-|-- .env.example
-|-- ERD.mmd
-|-- ERD.svg
-|-- LICENSE
-|-- README.md
-|-- SECURITY.md
-|-- data_dictionary.md
-|-- docs/
-|   |-- api.md
-|   |-- architecture.md
-|   |-- domain-scenarios.md
-|   |-- sample-results.md
-|   `-- sql-vs-mongo.md
-|-- frontend/
-|   |-- app.js
-|   |-- index.html
-|   `-- styles.css
-|-- mongo_queries.js
-|-- mongo_seed.js
-|-- mongo_setup.js
-|-- package.json
-|-- postgres_queries.sql
-|-- postgres_schema.sql
-|-- postgres_seed.sql
-`-- src/
-    |-- case-stories.js
-    |-- config.js
-    |-- emr-service.js
-    |-- server.js
-    `-- supabase.js
+```bash
+make test
+# OR
+npm test
 ```
 
-## Current Limitations
+Tests use Node's built-in test runner — no external test framework needed. The suite covers health checks, UUID validation, unknown route handling, and graceful degradation when Supabase is unconfigured.
 
-- authentication and role-based authorization are not implemented
-- current write workflows focus on patient administration, appointments, allergies, medications, and basic encounters
-- edit flows are not implemented for every entity yet, and deletion is generally modeled as status changes instead of destructive removal
-- MongoDB is documented and scripted, but it is not the live runtime store for the web app
-- this project models healthcare workflows, but it is not production-ready clinical software
+---
 
-## Roadmap
+## CI / CD
 
-- diagnosis editing and encounter amendment flows
-- broader appointment and patient filtering views
-- medication edit and hold workflows
-- allergy edit and restoration workflows
-- broader audit coverage for write actions
-- automated tests for the API and frontend state handling
-- deployment configuration for a hosted demo
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| **CI** | Push / PR to `main` | Installs deps, runs `npm audit`, runs tests, lints Dockerfile |
+| **CD** | Push to `main` or version tag | Builds multi-stage Docker image, pushes to `ghcr.io` |
 
-## Supporting Documentation
+Docker images are tagged as `main`, `sha-<short>`, and `v<semver>` on tagged releases.
 
-- `docs/api.md`
-- `docs/architecture.md`
-- `docs/sql-vs-mongo.md`
-- `docs/domain-scenarios.md`
-- `docs/sample-results.md`
-- `SECURITY.md`
+---
+
+## Deployment
+
+### Railway (recommended — free tier)
+
+1. Push this repo to GitHub
+2. Create a new project at [railway.app](https://railway.app) → "Deploy from GitHub repo"
+3. Add environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NODE_ENV=production`
+4. Railway uses `railway.toml` to configure the build — deploys automatically on every push to `main`
+
+### Manual (any Linux server)
+
+```bash
+# Pull the latest image built by CD
+docker pull ghcr.io/YOUR_USERNAME/YOUR_REPO:main
+
+# Run it
+docker run -d \
+  -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e SUPABASE_URL=... \
+  -e SUPABASE_SERVICE_ROLE_KEY=... \
+  --restart unless-stopped \
+  ghcr.io/YOUR_USERNAME/YOUR_REPO:main
+```
+
+---
+
+## API Reference
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/health` | Application health, uptime, memory |
+| `GET` | `/api/dashboard` | Aggregated metrics snapshot |
+| `GET` | `/api/patients?search=` | List / search patients |
+| `POST` | `/api/patients` | Create patient |
+| `PATCH` | `/api/patients/:id` | Update patient demographics |
+| `GET` | `/api/patients/:id/chart` | Full patient chart |
+| `POST` | `/api/patients/:id/appointments` | Book appointment |
+| `PATCH` | `/api/appointments/:id` | Update appointment |
+| `POST` | `/api/patients/:id/allergies` | Add allergy |
+| `PATCH` | `/api/allergies/:id` | Update allergy |
+| `POST` | `/api/patients/:id/encounters` | Create encounter |
+| `POST` | `/api/patients/:id/medications` | Add medication |
+| `PATCH` | `/api/medications/:id` | Update medication |
+| `GET` | `/api/doctors` | List doctors |
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `SUPABASE_URL` | Yes | — | Your Supabase project URL |
+| `SUPABASE_ANON_KEY` | Yes* | — | Anon key (read-only workflows) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes* | — | Service role key (write workflows) |
+| `NODE_ENV` | No | `development` | `development` / `production` / `test` |
+| `PORT` | No | `3000` | HTTP port |
+| `CORS_ORIGIN` | No | — | Comma-separated allowed origins |
+| `RATE_LIMIT_MAX` | No | `120` | Max requests per IP per window |
+| `RATE_LIMIT_WINDOW_MS` | No | `60000` | Rate limit window in milliseconds |
+
+*At least one of `SUPABASE_ANON_KEY` or `SUPABASE_SERVICE_ROLE_KEY` is required.
+
+---
 
 ## License
 
-This project is available under the MIT License. See `LICENSE` for details.
+MIT

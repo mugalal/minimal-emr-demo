@@ -1,8 +1,10 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 
 import { config, getSupabaseRuntimeKey, isSupabaseConfigured, isProduction, validateConfig } from "./config.js";
+import { logger } from "./logger.js";
 import {
   createAllergy,
   createAppointment,
@@ -25,9 +27,20 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const frontendRoot = path.join(projectRoot, "frontend");
 
+// Read package.json once at startup for version info
+let APP_VERSION = "unknown";
+try {
+  const pkg = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
+  APP_VERSION = pkg.version ?? "unknown";
+} catch {
+  // Non-fatal: version stays "unknown"
+}
+
+const START_TIME = Date.now();
+
 // ---- startup checks ----
 for (const warning of validateConfig()) {
-  console.warn(`[config] ${warning}`);
+  logger.warn(warning);
 }
 
 // ---- app ----
@@ -140,8 +153,18 @@ function apiRateLimit(request, response, next) {
 app.use(express.json({ limit: "100kb" }));
 
 // ---- request logger ----
-app.use((request, _response, next) => {
-  console.log(`${new Date().toISOString()} ${request.method} ${request.url}`);
+app.use((request, response, next) => {
+  const start = Date.now();
+
+  response.on("finish", () => {
+    logger.info("request", {
+      method: request.method,
+      url: request.url,
+      status: response.statusCode,
+      ms: Date.now() - start,
+    });
+  });
+
   next();
 });
 
@@ -171,10 +194,22 @@ app.get(
           checkedAt: new Date().toISOString(),
         };
 
+    const mem = process.memoryUsage();
+
     response.json({
       application: config.appName,
+      version: APP_VERSION,
       status: health.status,
       checkedAt: health.checkedAt,
+      uptime: {
+        seconds: Math.floor((Date.now() - START_TIME) / 1000),
+        human: formatUptime(Date.now() - START_TIME),
+      },
+      memory: {
+        rss:      formatBytes(mem.rss),
+        heapUsed: formatBytes(mem.heapUsed),
+        heapTotal: formatBytes(mem.heapTotal),
+      },
       dataSources: {
         postgres: {
           configured: isSupabaseConfigured(),
@@ -303,6 +338,11 @@ app.patch(
   })
 );
 
+// ---- catch-all 404 for unknown API routes ----
+app.use("/api/*", (_request, response) => {
+  response.status(404).json({ error: "API endpoint not found." });
+});
+
 // ---- static frontend ----
 app.use(
   express.static(frontendRoot, {
@@ -320,7 +360,7 @@ app.use((error, _request, response, _next) => {
   const statusCode = error.statusCode ?? 500;
 
   if (statusCode >= 500) {
-    console.error(`[error] ${statusCode} -- ${error.message}\n${error.stack ?? ""}`);
+    logger.error("unhandled error", { status: statusCode, message: error.message, stack: error.stack });
   }
 
   const payload = {
@@ -334,25 +374,48 @@ app.use((error, _request, response, _next) => {
   response.status(statusCode).json(payload);
 });
 
+// ---- helpers ----
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+function formatUptime(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `${d}d ${h % 24}h`;
+  if (h > 0) return `${h}h ${m % 60}m`;
+  if (m > 0) return `${m}m ${s % 60}s`;
+  return `${s}s`;
+}
+
 // ---- server + graceful shutdown ----
 const server = app.listen(config.port, () => {
-  console.log(`${config.appName} running at http://localhost:${config.port} [${config.nodeEnv}]`);
+  logger.info(`${config.appName} v${APP_VERSION} running`, {
+    url: `http://localhost:${config.port}`,
+    env: config.nodeEnv,
+  });
 });
 
 function shutdown(signal) {
-  console.log(`\n${signal} received -- shutting down gracefully.`);
+  logger.info(`${signal} received — shutting down gracefully`);
 
   server.close(() => {
-    console.log("HTTP server closed.");
+    logger.info("HTTP server closed");
     process.exit(0);
   });
 
   // Force exit after 10 s in case in-flight requests stall.
   setTimeout(() => {
-    console.error("Graceful shutdown timed out -- forcing exit.");
+    logger.error("Graceful shutdown timed out — forcing exit");
     process.exit(1);
   }, 10_000).unref();
 }
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
+
+export { app };

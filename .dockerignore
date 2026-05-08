@@ -1,0 +1,23 @@
+# Version control
+.git
+.gitattributes
+
+# Node development artifacts
+node_modules
+npm-debug.log*
+
+# Environment files (never bake secrets into images)
+.env
+.env.*
+!.env.example
+
+# Dev tooling
+.github
+tests
+Makefile
+*.md
+
+# Editor / OS artifacts
+.DS_Store
+*.swp
+.vscode
